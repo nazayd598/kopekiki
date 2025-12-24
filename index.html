@@ -3,35 +3,55 @@
 <head>
   <meta charset="UTF-8">
   <title>Stateful Dog App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
     body {
-      background: #0f2027;
-      color: #fff;
+      margin: 0;
+      min-height: 100vh;
       font-family: system-ui, sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
+      color: #fff;
     }
+
     .card {
       background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(10px);
       padding: 24px;
       border-radius: 16px;
+      width: 90%;
+      max-width: 500px;
       text-align: center;
-      width: 400px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
     }
+
     img {
       width: 100%;
+      max-height: 350px;
+      object-fit: cover;
       border-radius: 12px;
       margin-top: 16px;
+      opacity: 0;
+      transition: opacity 0.4s ease;
     }
+
+    img.show {
+      opacity: 1;
+    }
+
     button {
-      margin-top: 16px;
-      padding: 10px 20px;
+      margin-top: 20px;
+      padding: 12px 24px;
       border: none;
       border-radius: 999px;
+      font-size: 1rem;
+      font-weight: 600;
       cursor: pointer;
+      background: #ffb703;
+      color: #111;
     }
   </style>
 </head>
@@ -44,16 +64,38 @@
   </div>
 
   <script>
-    async function loadDog() {
-      const res = await fetch("/api/dog");
+    const STORAGE_KEY = "lastDogImage";
+
+    async function fetchDog() {
+      const res = await fetch("https://dog.ceo/api/breeds/image/random");
       const data = await res.json();
-      document.getElementById("dog").src = data.image;
+      return data.message;
+    }
+
+    async function loadDog() {
+      const img = document.getElementById("dog");
+      const savedDog = localStorage.getItem(STORAGE_KEY);
+
+      if (savedDog) {
+        img.src = savedDog;
+        img.onload = () => img.classList.add("show");
+        return;
+      }
+
+      const newDogUrl = await fetchDog();
+      localStorage.setItem(STORAGE_KEY, newDogUrl);
+      img.src = newDogUrl;
+      img.onload = () => img.classList.add("show");
     }
 
     async function newDog() {
-      const res = await fetch("/api/dog", { method: "POST" });
-      const data = await res.json();
-      document.getElementById("dog").src = data.image;
+      const img = document.getElementById("dog");
+      img.classList.remove("show");
+
+      const newDogUrl = await fetchDog();
+      localStorage.setItem(STORAGE_KEY, newDogUrl);
+      img.src = newDogUrl;
+      img.onload = () => img.classList.add("show");
     }
 
     loadDog();
